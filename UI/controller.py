@@ -2,11 +2,6 @@ import flet as ft
 from UI.view import View
 from model.model import DepositoStrumenti
 
-'''
-    CONTROLLER:
-    - Funziona da intermediario tra MODELLO e VIEW
-    - Gestisce la logica del flusso dell'applicazione
-'''
 
 class Controller:
     def __init__(self, view: View, model: DepositoStrumenti):
@@ -27,5 +22,37 @@ class Controller:
         self._view.txt_responsabile.value = f"Responsabile: {self._model.responsabile}"
         self._view.update()
 
-    # Altre Funzioni Event Handler
-    # TODO
+    def handle_mostra_strumenti(self, e):
+        strumenti = self._model.get_strumenti()
+        if strumenti is None:
+            self._view.show_alert("Errore di connessione al database.")
+            return
+
+        self._view.lista_strumenti.controls.clear()
+        for s in strumenti:
+            stato = "✅" if s.disponibile else "⛔"
+            self._view.lista_strumenti.controls.append(ft.Text(f"{stato} {s}"))
+
+        self._view.update()
+
+    def handle_cerca_tipo(self, e):
+        tipo_cercato = self._view.input_tipo_strumento.value.strip()
+        if not tipo_cercato:
+            self._view.show_alert("Inserisci un tipo prima di cercare.")
+            return
+
+        strumenti = self._model.cerca_strumenti_per_tipo(tipo_cercato)
+        if strumenti is None:
+            self._view.show_alert("Errore di connessione al database.")
+            return
+
+        self._view.lista_strumenti_ricerca.controls.clear()
+
+        if len(strumenti) == 0:
+            self._view.lista_strumenti_ricerca.controls.append(ft.Text("Nessuno strumento trovato per questo tipo."))
+        else:
+            for s in strumenti:
+                stato = "✅" if s.disponibile else "⛔"
+                self._view.lista_strumenti_ricerca.controls.append(ft.Text(f"{stato} {s}"))
+
+        self._view.update()
